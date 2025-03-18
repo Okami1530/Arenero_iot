@@ -1,0 +1,57 @@
+import cv2
+import requests
+
+# Configuración del bot de Telegram
+TELEGRAM_BOT_TOKEN = 'TU_TOKEN_AQUI'
+TELEGRAM_CHAT_ID = 'TU_CHAT_ID_AQUI'
+MENSAJE_ALERTA = "¡Atención! Es hora de limpiar el arenero del gato."
+
+# Función para enviar mensaje por Telegram
+def enviar_alerta():
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": MENSAJE_ALERTA}
+    requests.post(url, data=payload)
+
+# Función para detectar heces en la imagen
+def detectar_heces(imagen_path):
+    # Cargar imagen
+    imagen = cv2.imread(imagen_path)
+
+    # Aplicar filtro de suavizado
+    suavizado = cv2.GaussianBlur(imagen, (15,15), 0)
+
+    # Aplicar detección de bordes
+    bordes = cv2.Canny(suavizado, 20, 40, L2gradient=True)
+
+    # Aplicar operaciones morfologicas
+    dilatado = cv2.dilate(bordes, None, iterations=3)
+    erosi = cv2.erode(dilatado, None, iterations=3)
+
+    cv2.imshow('Bordes', erosi)
+
+    countours, _ = cv2.findContours(erosi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+
+    # Dibujar los contornos detectados (opcional para depuración)
+    cv2.drawContours(imagen, countours, -1, (0, 255, 0), 2)
+
+    # Mostrar la imagen (opcional para depuración)
+    cv2.imshow('Detección de Heces', imagen)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+
+    # Verificar si se detectaron 3 heces
+    if len(countours) >= 3:
+        print("🔔 ¡Tres heces detectadas! Enviando alerta...")
+        print(f"✅ Número de heces detectadas: {len(countours)}")
+        enviar_alerta()
+    else:
+        print(f"✅ Número de heces detectadas: {len(countours)}")
+
+# ----------------- PROGRAMA PRINCIPAL -----------------
+if __name__ == "__main__":
+    # Imagen capturada por el ESP32-CAM (ejemplo)
+    ruta_imagen = "imagen_arenero.jpg"
+    
+    # Detectar heces y enviar alerta si se cumplen las condiciones
+    detectar_heces(ruta_imagen)
