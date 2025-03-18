@@ -1,7 +1,11 @@
+# Importar librerias
+import os
 import cv2
 import requests
+import numpy as np
+from flask import Flask, request, jsonify
 
-# Configuración del bot de Telegram
+# Configuración del bot de Telegram (Temporal)
 TELEGRAM_BOT_TOKEN = 'TU_TOKEN_AQUI'
 TELEGRAM_CHAT_ID = 'TU_CHAT_ID_AQUI'
 MENSAJE_ALERTA = "¡Atención! Es hora de limpiar el arenero del gato."
@@ -27,7 +31,7 @@ def detectar_heces(imagen_path):
     dilatado = cv2.dilate(bordes, None, iterations=3)
     erosi = cv2.erode(dilatado, None, iterations=3)
 
-    cv2.imshow('Bordes', erosi)
+    #cv2.imshow('Bordes', erosi)
 
     countours, _ = cv2.findContours(erosi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -35,23 +39,30 @@ def detectar_heces(imagen_path):
     # Dibujar los contornos detectados (opcional para depuración)
     cv2.drawContours(imagen, countours, -1, (0, 255, 0), 2)
 
-    # Mostrar la imagen (opcional para depuración)
-    cv2.imshow('Detección de Heces', imagen)
-    cv2.waitKey(3000)
-    cv2.destroyAllWindows()
 
     # Verificar si se detectaron 3 heces
     if len(countours) >= 3:
         print("🔔 ¡Tres heces detectadas! Enviando alerta...")
-        print(f"✅ Número de heces detectadas: {len(countours)}")
         enviar_alerta()
     else:
         print(f"✅ Número de heces detectadas: {len(countours)}")
 
 # ----------------- PROGRAMA PRINCIPAL -----------------
-if __name__ == "__main__":
-    # Imagen capturada por el ESP32-CAM (ejemplo)
-    ruta_imagen = "imagen_arenero.jpg"
-    
-    # Detectar heces y enviar alerta si se cumplen las condiciones
+app = Flask(__name__)
+@app.route('/upload', methods=['POST'])
+def upload():
+    if 'imagen' not in request.files:
+        return jsonify({"error": "No se encontró la imagen en la solicitud."}), 400
+
+    imagen = request.files['imagen']
+    ruta_imagen = os.path.join("images", "imagen_arenero.jpg")
+    imagen.save(ruta_imagen)
+
+    # Detectar heces en la imagen recibida
     detectar_heces(ruta_imagen)
+
+    return jsonify({"mensaje": "Imagen recibida y procesada correctamente."})
+
+if __name__ == "__main__":
+    os.makedirs("images", exist_ok=True)
+    app.run(host='0.0.0.0', port=5000)
