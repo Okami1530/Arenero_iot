@@ -56,17 +56,21 @@ def detectar_heces(imagen_path):
 app = Flask(__name__)
 @app.route("/upload", methods=["POST"])    
 def upload():
-    if 'imagen' not in request.files:
-        return jsonify({"error": "No se encontró la imagen en la solicitud."}), 400
+    if 'file' not in request.files and request.data == b'':
+        return "No se encontró el archivo", 400
 
-    imagen = request.files['imagen']
-    ruta_imagen = os.path.join("images", "imagen_arenero.jpg")
-    imagen.save(ruta_imagen)
+    # Si se envió como archivo (form-data)
+    if 'file' in request.files:
+        file = request.files['file']
+        file.save(f"images/{file.filename}")
+        return "Imagen recibida correctamente", 200
 
-    # Detectar heces en la imagen recibida
-    detectar_heces(ruta_imagen)
+    # Si se envió como datos binarios (raw data)
+    with open("images/imagen_recibida.jpg", "wb") as f:
+        f.write(request.data)
+    
+    return "Imagen recibida correctamente", 200
 
-    return jsonify({"mensaje": "Imagen recibida y procesada correctamente."})
 
 if __name__ == "__main__":
     # Imagen capturada por el ESP32-CAM (ejemplo)
@@ -74,4 +78,4 @@ if __name__ == "__main__":
     os.makedirs("images", exist_ok=True)
     app.run(host="0.0.0.0", port=5000)
     # Detectar heces y enviar alerta si se cumplen las condiciones
-    detectar_heces(ruta_imagen)
+    #detectar_heces(ruta_imagen)
