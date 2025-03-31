@@ -79,8 +79,8 @@ void enviarImagen() {
         Serial.printf("❌ Error en la conexión: %s\n", http.errorToString(httpResponseCode).c_str());
     }
 
-    http.end();
     esp_camera_fb_return(fb);
+    http.end();
 }
 
 void setup() {

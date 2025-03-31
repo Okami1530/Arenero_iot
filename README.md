@@ -1,1 +1,4 @@
 # Arenero_iot
+Este proyecto usa dos codigos distintos para tener un funcionamiento mas adecuado.
+1. El Cliente, es cual es un codigo de Arduino para un Esp-32 CAM, en el cual cada cierto tiempo tomara una foto y la mandara a una API REST mediante Wifi, este Cliente se deberia de poner en la parte superior del arenero, con la camara apuntando hacia abajo.
+2. El Servidor, el cual sera un script de Python el cual creara una API REST mediante Flask, la cual recibira una imagen del Cliente, una vez recibida la imagen, el script usando CV2, implementara diversos filtros para la busqueda correcta de contornos en la imagen, lo cual se usara como base a la hora de evaluar la suciedad de arenero, seguido a esto, en caso de que considere una suciedad considerable, usando la API Twilio, mandaremos una notificacion al usuario mediante WIFI, advirtiendole de la suciedad del Arenero.

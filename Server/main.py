@@ -1,19 +1,22 @@
-import numpy as np
 import cv2
 import os
 from flask import Flask, jsonify, request
-import requests
+from twilio.rest import Client
 
-# Configuración del bot de Telegram
-TELEGRAM_BOT_TOKEN = 'TU_TOKEN_AQUI'
-TELEGRAM_CHAT_ID = 'TU_CHAT_ID_AQUI'
-MENSAJE_ALERTA = "¡Atención! Es hora de limpiar el arenero del gato."
+# Configuración de Twilio
+TWILIO_ACCOUNT_SID = 'TU_ACCOUNT_SID_AQUI'
+TWILIO_AUTH_TOKEN = 'TU_AUTH_TOKEN_AQUI'
+TWILIO_PHONE_NUMBER = 'TU_NUMERO_DE_TWILIO'
+DESTINATARIO = 'NUMERO_DEL_DESTINATARIO'
 
-# Función para enviar mensaje por Telegram
+# Función para enviar mensaje por WhatsApp
 def enviar_alerta():
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": MENSAJE_ALERTA}
-    requests.post(url, data=payload)
+    client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    mensaje = client.messages.create(
+        body="¡Atención! Es hora de limpiar el arenero del gato.",
+        from_=TWILIO_PHONE_NUMBER,
+        to=DESTINATARIO
+    )
 
 # Función para detectar heces en la imagen
 def detectar_heces(imagen_path):
@@ -21,7 +24,6 @@ def detectar_heces(imagen_path):
     imagen = cv2.imread(imagen_path)
     #grayscale = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
     
- 
     # Aplicar filtro de suavizado
     suavizado = cv2.GaussianBlur(imagen, (41,41), 0)
 
@@ -68,7 +70,7 @@ def upload():
     # Si se envió como datos binarios (raw data)
     with open("images/imagen_recibida.jpg", "wb") as f:
         f.write(request.data)
-    
+        detectar_heces("images/imagen_recibida.jpg")
     return "Imagen recibida correctamente", 200
 
 
