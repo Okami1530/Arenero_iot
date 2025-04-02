@@ -55,18 +55,22 @@ void startCamera(){
     config.frame_size = FRAMESIZE_QVGA;
     config.jpeg_quality = 12;
     config.fb_count = 1;
+    pinMode(4,OUTPUT);
+    digitalWrite(4,LOW);
 
     esp_camera_init(&config);
 }
 
 // Función para capturar y enviar imagen
 void enviarImagen() {
+    digitalWrite(4,HIGH);
+    delay(200);
     camera_fb_t *fb = esp_camera_fb_get();
     if (!fb) {
         Serial.println("❌ Error al capturar la imagen");
         return;
     }
-
+    digitalWrite(4,LOW);
     HTTPClient http;
     http.begin(SERVER_URL);
     http.addHeader("Content-Type", "application/octet-stream");
