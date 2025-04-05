@@ -2,6 +2,7 @@ import cv2
 import os
 from flask import Flask, jsonify, request
 from twilio.rest import Client
+import time
 
 # Configuración de Twilio
 TWILIO_ACCOUNT_SID = 'TU_ACCOUNT_SID_AQUI'
@@ -17,11 +18,16 @@ def enviar_alerta():
         from_=TWILIO_PHONE_NUMBER,
         to=DESTINATARIO
     )
+    print(message.sid)
 
 # Función para detectar heces en la imagen
 def detectar_heces(imagen_path):
     # Cargar imagen
     imagen = cv2.imread(imagen_path)
+    if imagen is None:
+        print(f"❌ Error: no se pudo cargar la imagen en {imagen_path}")
+
+        return
     #grayscale = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
     
     # Aplicar filtro de suavizado
@@ -34,7 +40,7 @@ def detectar_heces(imagen_path):
 
     dilatado = cv2.dilate(bordes, None, iterations=3)
     erosi = cv2.erode(dilatado, (5,5), iterations=3)
-    cv2.imshow('Bordes', erosi)
+    #cv2.imshow('Bordes', erosi)
 
     countours, _ = cv2.findContours(erosi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -65,14 +71,20 @@ def upload():
     if 'file' in request.files:
         file = request.files['file']
         file.save(f"images/{file.filename}")
+        detectar_heces(f"images/{file.filename}")
         return "Imagen recibida correctamente", 200
 
     # Si se envió como datos binarios (raw data)
     with open("images/imagen_recibida.jpg", "wb") as f:
         f.write(request.data)
-        detectar_heces("images/imagen_recibida.jpg")
+        time.sleep(1)
+        #detectar_heces("images/imagen_recibida.jpg")
     return "Imagen recibida correctamente", 200
 
+@app.route("/detectar", methods=["GET"])
+def detectar():
+    detectar_heces("images/imagen_recibida.jpg")
+    return "Imagen detectada correctamente", 200
 
 if __name__ == "__main__":
     # Imagen capturada por el ESP32-CAM (ejemplo)

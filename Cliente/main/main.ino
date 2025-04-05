@@ -10,6 +10,7 @@
 
 // URL del servidor Flask
 #define SERVER_URL "http://192.168.100.39:5000/upload"
+#define SERVER_URL2 "http://192.168.100.39:5000/detectar"
 
 // Pines de la cámara AI-Thinker
 #define PWDN_GPIO_NUM     32
@@ -82,8 +83,17 @@ void enviarImagen() {
     } else {
         Serial.printf("❌ Error en la conexión: %s\n", http.errorToString(httpResponseCode).c_str());
     }
-
     esp_camera_fb_return(fb);
+    http.end();
+
+    http.begin(SERVER_URL2);
+    int httpResponseCode2 = http.GET();
+
+    if (httpResponseCode2 > 0) {
+        Serial.printf("✅ Imagen detectada correctamente: Código %d\n", httpResponseCode2);
+    } else {
+        Serial.printf("❌ Error en la conexión: %s\n", http.errorToString(httpResponseCode2).c_str());
+    }
     http.end();
 }
 
